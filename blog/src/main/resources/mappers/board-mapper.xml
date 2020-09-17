@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="mappers.board-mapper">
+	<!-- nextval 값 얻기 -->
+	<select id="getNextVal" resultType="int">
+		select seq_bno.nextval from dual
+	</select>
+	
+	<!-- 글쓰기 -->
+	<insert id="insertArticle">
+		insert into tbl_board (bno, title, content, writer)
+		values (#{bno}, #{title}, #{content}, #{writer})
+	</insert>
+	
+	<!--첨부파일 입력-->
+	<insert id="insertAttach">
+		insert into tbl_attach(file_name, bno)
+		values (#{file_name}, #{bno})
+	</insert>
+	
+	<!--첨부파일 찾기 -->
+	<select id="attachList" resultType="AttachVo">
+		select * from tbl_attach
+	</select>
+	
+	<!-- 글목록 -->
+	<select id="list" resultType="BoardVo">
+		select *
+		from (select rownum rnum, a.*
+		      from (select * from tbl_board
+		      		<include refid="search"></include>
+		            order by bno desc) a)
+		where rnum between #{startRow} and #{endRow}
+	</select>
+	
+	<!-- 게시글 갯수 -->
+	<select id="getCount" resultType="int">
+		select count(*) from tbl_board
+		<include refid="search"></include>
+	</select>
+	<!-- 글 삭제 -->
+	<delete id="deleteArticle">
+		delete tbl_board
+		where bno = #{bno}
+	</delete>
+	<!-- 첨부파일 삭제 -->
+	<delete id="deleteAttach">
+		delete tbl_attach
+		where bno = #{bno}
+	</delete>
+	<!-- 첨부파일 삭제(이름으로) -->
+	<delete id="deleteImg">
+		delete tbl_attach
+		where file_name = #{file_name}
+	</delete>
+	
+	<!-- 글 선택 -->
+	<select id="selectBoard" resultType="boardVo">
+		select * from tbl_board
+		where bno = #{bno}
+	</select>
+	<!-- 첨부파일 선택 -->
+	<select id="selectAttach" resultType="AttachVo">
+		select * from tbl_attach
+		where bno = #{bno}
+	</select>
+	
+	<!-- 글 수정 -->
+	<update id="updateArticle">
+		update tbl_board set
+			title   = #{title},
+			content = #{content}
+		where bno = #{bno}
+	</update>
+	
+	
+	<!-- 검색 -->
+	<sql id="search">
+		<if test="keyword != null">
+   			<choose>
+   				<when test='searchType == "t"'>
+   					where title like '%' || #{keyword} || '%'
+   				</when>
+   				<when test='searchType == "c"'>
+   					where content like '%' || #{keyword} || '%'
+   				</when>
+   				<when test='searchType == "w"'>
+   					where writer like '%' || #{keyword} || '%'
+   				</when>
+   				<when test='searchType == "tc"'>
+   					where title like '%' || #{keyword} || '%'
+   					or content like '%' || #{keyword} || '%'
+   				</when>
+   				<when test='searchType == "tcw"'>
+   					where title like '%' || #{keyword} || '%'
+   					or content like '%' || #{keyword} || '%'
+   					or writer like '%' || #{keyword} || '%'
+   				</when>
+   			</choose>
+     		
+     	</if>
+	</sql>
+</mapper>
